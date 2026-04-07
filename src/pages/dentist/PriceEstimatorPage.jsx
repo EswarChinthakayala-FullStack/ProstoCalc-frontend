@@ -227,7 +227,17 @@ const PriceEstimatorPage = () => {
     const result = costEstimatorService.estimate({ ...formData, customPricelist });
     setEstimate(result);
     setIsCalculating(false);
-  }, [formData.treatmentType, formData.teethCount, formData.sessions, formData.complexity, formData.material, customPricelist]);
+  }, [
+    formData.treatmentType, 
+    formData.teethCount, 
+    formData.sessions, 
+    formData.complexity, 
+    formData.material, 
+    formData.age, 
+    formData.hygiene, 
+    formData.urgency, 
+    customPricelist
+  ]);
 
   const handleAnalyze = async () => {
     if (!estimate || !user?.id) return;

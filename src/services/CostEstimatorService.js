@@ -175,24 +175,36 @@ class CostEstimatorService {
   // The residual ε is estimated from the treatment's risk profile.
   // ═══════════════════════════════════════════════════════════════════
   algorithmRegression(inputs, baseCost) {
-    const { teethCount = 1, sessions = 1, complexity = "Medium", material = "Standard" } = inputs;
+    const { 
+      teethCount = 1, 
+      sessions = 1, 
+      complexity = "Medium", 
+      material = "Standard",
+      age = 35,
+      hygiene = 7,
+      urgency = 5
+    } = inputs;
 
     const compVal = this.complexityWeights[complexity] || 1.0;
     const matVal  = this.materialWeights[material] || 1.0;
 
     // Coefficients (β values) — learned from clinical regression analysis
-    const β0 = 0;                    // Intercept (absorbed into baseCost)
+    // β0 Intercept (absorbed into baseCost)
     const β1 = compVal;               // Complexity coefficient
     const β2 = matVal;                // Material coefficient
-    const β3 = Math.max(0.75, 1.0 - ((teethCount - 1) * 0.05)); // Volume discount (diminishing returns)
+    const β3 = Math.max(0.75, 1.0 - ((teethCount - 1) * 0.05)); // Volume discount
     const β4 = 1.0 + ((sessions - 1) * 0.08);                     // Session overhead
 
+    // Additional Coefficients for Regression
+    const ageCoeff = 1.0 + (age > 40 ? (age - 40) * 0.002 : (40 - age) * -0.001);
+    const hygieneCoeff = 1.0 + (7 - hygiene) * 0.015;
+    const urgencyCoeff = 1.0 + (urgency - 5) * 0.012;
+
     // INTERACTION TERM: Complexity × Material synergy
-    // When both are high, the combined effect is super-additive
     const interactionEffect = 1.0 + ((compVal - 1.0) * (matVal - 1.0) * 0.5);
 
     // Regression equation
-    const predicted = baseCost * teethCount * β3 * β4 * β1 * β2 * interactionEffect;
+    const predicted = baseCost * teethCount * β3 * β4 * β1 * β2 * ageCoeff * hygieneCoeff * urgencyCoeff * interactionEffect;
 
     // Residual variance from treatment risk profile
     const profile = this.treatmentProfiles[inputs.treatmentType] || { riskSigma: 0.10 };
@@ -395,22 +407,19 @@ class CostEstimatorService {
     // ── LIKELIHOOD (Clinical Evidence) ──
     // Each piece of clinical data updates our belief
 
-    // Evidence 1: Age Risk Factor
-    // Older patients → higher complication risk → adjust mean upward
-    const ageEvidence = age > 60 ? 1.12 : age > 45 ? 1.05 : age < 25 ? 0.95 : 1.0;
+    // Evidence 1: Age Risk Factor (Granular continuous adjustment)
+    const ageEvidence = 1.0 + (age - 35) * 0.0025 + (age > 60 ? (age - 60) * 0.005 : 0);
 
-    // Evidence 2: Hygiene Quality
-    // Poor hygiene → longer healing → more sessions → higher cost
-    const hygieneEvidence = hygiene <= 3 ? 1.15 : hygiene <= 5 ? 1.08 : hygiene >= 8 ? 0.95 : 1.0;
+    // Evidence 2: Hygiene Quality (Granular continuous adjustment)
+    const hygieneEvidence = 1.0 + (7 - hygiene) * 0.02;
 
     // Evidence 3: Urgency (Emergency premium)
-    // High urgency → premium scheduling, less optimization → higher cost
-    const urgencyEvidence = urgency >= 8 ? 1.18 : urgency >= 6 ? 1.08 : urgency <= 3 ? 0.97 : 1.0;
+    const urgencyEvidence = 1.0 + (urgency - 5) * 0.025;
 
     // Evidence 4: Session deviation from average
     const avgSessions = profile.avgDuration || 2;
     const sessionDeviation = sessions / avgSessions;
-    const sessionEvidence = 1.0 + (sessionDeviation - 1.0) * 0.15;
+    const sessionEvidence = 1.0 + (sessionDeviation - 1.0) * 0.12;
 
     // Combined likelihood multiplier
     const likelihoodMultiplier = ageEvidence * hygieneEvidence * urgencyEvidence * sessionEvidence;
