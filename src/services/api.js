@@ -1,8 +1,11 @@
 import axios from 'axios'
 
+// Centralized API Configuration
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://180.235.121.253:8168';
+
 // Create Axios Instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

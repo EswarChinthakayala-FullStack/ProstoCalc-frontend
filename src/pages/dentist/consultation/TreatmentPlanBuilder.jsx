@@ -239,7 +239,12 @@ const TreatmentPlanBuilder = () => {
     // Build custom price map from catalog for estimator
     const customPriceMap = useMemo(() => {
         const map = {}
-        catalog.forEach((c) => { if (c.name && c.effective_cost) map[c.name] = c.effective_cost })
+        catalog.forEach((c) => {
+            if (c.name) {
+                // Respect zero costs if they are in the catalog
+                map[c.name] = (c.effective_cost !== undefined && c.effective_cost !== null) ? parseFloat(c.effective_cost) : (parseFloat(c.custom_cost) || 0)
+            }
+        })
         return map
     }, [catalog])
 
@@ -770,7 +775,7 @@ const TreatmentPlanBuilder = () => {
                                                     {cloudResult ? 'Cloud Clinical Prediction' : 'On-Device SLM Prediction'}
                                                 </span>
                                                 <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-1 tabular-nums">
-                                                    ₹{(cloudResult ? cloudResult.total_cost : aiEstimation.baseCost).toLocaleString()}
+                                                    ₹{((cloudResult ? cloudResult.total_cost : aiEstimation.baseCost) || 0).toLocaleString()}
                                                 </p>
                                                 <p className="text-[8px] font-bold text-slate-400 dark:text-zinc-600 mt-1 uppercase tracking-tight">
                                                     {cloudResult ? cloudResult.engine_version : aiEstimation.engine}
@@ -789,8 +794,8 @@ const TreatmentPlanBuilder = () => {
                                             <div>
                                                 <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-wider">Projected Range</span>
                                                 <p className="text-sm font-extrabold text-slate-800 dark:text-white">
-                                                    ₹{(cloudResult ? (cloudResult.min_range || cloudResult.base_cost * 0.92) : aiEstimation.minRange).toLocaleString()} –
-                                                    ₹{(cloudResult ? (cloudResult.max_range || cloudResult.base_cost * 1.10) : aiEstimation.maxRange).toLocaleString()}
+                                                    ₹{((cloudResult ? (cloudResult.min_range || cloudResult.base_cost * 0.92) : aiEstimation.minRange) || 0).toLocaleString()} –
+                                                    ₹{((cloudResult ? (cloudResult.max_range || cloudResult.base_cost * 1.10) : aiEstimation.maxRange) || 0).toLocaleString()}
                                                 </p>
                                             </div>
                                         </div>

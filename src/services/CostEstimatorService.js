@@ -86,15 +86,15 @@ class CostEstimatorService {
 
     // ── Doctor's Base Costs (Ground Truth) ──
     this.defaultBaseCosts = {
-      "Extraction": 0,
-      "Crown": 1300,
-      "Implant": 2500,
-      "CD": 1400,
-      "RPD": 60,
-      "RCT": 420,
-      "FMR": 45000,
-      "Scaling": 1200,
-      "Filling": 1500
+      "Extraction": 800,
+      "Crown": 3500,
+      "Implant": 25000,
+      "CD": 15000,
+      "RPD": 5000,
+      "RCT": 3500,
+      "FMR": 150000,
+      "Scaling": 1500,
+      "Filling": 1800
     };
 
     // ── Clinical Risk Profiles per Treatment ──
@@ -348,7 +348,7 @@ class CostEstimatorService {
       predictedCost: Math.round(p50),
       minRange: Math.round(p5),
       maxRange: Math.round(p95),
-      confidenceScore: parseFloat((1 - sd / avg).toFixed(3)),
+      confidenceScore: parseFloat((avg === 0 ? 0.95 : (1 - sd / avg)).toFixed(3)),
       simulations: N,
       distribution: {
         mean: Math.round(avg),
@@ -429,13 +429,13 @@ class CostEstimatorService {
     // Likelihood precision (how much we trust this evidence)
     // More extreme patient profiles → lower precision (more uncertainty)
     const evidenceStrength = 1.0 / (1.0 + Math.abs(likelihoodMultiplier - 1.0));
-    const likelihoodVariance = Math.pow(priorMean * 0.15 / evidenceStrength, 2);
+    const likelihoodVariance = Math.pow(priorMean * 0.15 / evidenceStrength, 2) || 0.0001;
 
     // ── POSTERIOR (Bayesian Update) ──
     // Conjugate Normal: posterior is also Normal
     // Posterior precision = prior precision + likelihood precision
-    const priorPrecision      = 1 / priorVariance;
-    const likelihoodPrecision = 1 / likelihoodVariance;
+    const priorPrecision      = priorVariance === 0 ? 1000000 : (1 / priorVariance);
+    const likelihoodPrecision = likelihoodVariance === 0 ? 1000000 : (1 / likelihoodVariance);
     const posteriorPrecision  = priorPrecision + likelihoodPrecision;
 
     // Posterior mean = weighted combination of prior and likelihood
@@ -450,7 +450,7 @@ class CostEstimatorService {
     const credibleUpper = posteriorMean + 1.96 * posteriorStdDev;
 
     // Bayesian confidence: how narrow is the posterior vs the prior?
-    const beliefReduction = 1 - (posteriorVariance / priorVariance);
+    const beliefReduction = priorVariance === 0 ? 1.0 : (1 - (posteriorVariance / priorVariance));
 
     return {
       method: "Bayesian Inference (Conjugate Normal)",
@@ -594,16 +594,17 @@ class CostEstimatorService {
       weightedCost += p.cost * w;
     });
 
-    const ensembleCost = weightedCost / totalWeight;
+    const ensembleCost = totalWeight === 0 ? 0 : (weightedCost / totalWeight);
 
     // Measure model agreement: coefficient of variation of predictions
     const allCosts = predictions.map(p => p.cost);
     const sd = standardDeviation(allCosts);
     const avg = mean(allCosts);
-    const modelAgreement = 1 - (sd / avg);  // 1.0 = perfect agreement
+    const modelAgreement = avg === 0 ? 1.0 : (1 - (sd / avg));  // 1.0 = perfect agreement
 
     // If models strongly disagree, lower the confidence
-    const ensembleConfidence = Math.min(0.99, modelAgreement * 0.5 + mean(predictions.map(p => p.confidence)) * 0.5);
+    const meanConfidence = mean(predictions.map(p => p.confidence));
+    const ensembleConfidence = isNaN(meanConfidence) ? 0.90 : Math.min(0.99, modelAgreement * 0.5 + meanConfidence * 0.5);
 
     // Min/Max: use the most generous and conservative of all algorithms
     const allMins = [regression.minRange, gbdt.minRange, monteCarlo.minRange, bayesian.minRange, knn.minRange];
@@ -611,11 +612,11 @@ class CostEstimatorService {
 
     return {
       method: "Weighted Ensemble Meta-Learner (v5.0)",
-      predictedCost: Math.round(ensembleCost),
-      minRange: Math.round(percentile(allMins, 25)),
-      maxRange: Math.round(percentile(allMaxs, 75)),
-      confidenceScore: parseFloat(ensembleConfidence.toFixed(3)),
-      regionalMarketMedian: Math.round(ensembleCost * (1 + (sd / avg) * 0.5)),
+      predictedCost: isNaN(ensembleCost) ? 0 : Math.round(ensembleCost),
+      minRange: Math.round(percentile(allMins, 25)) || 0,
+      maxRange: Math.round(percentile(allMaxs, 75)) || 0,
+      confidenceScore: isNaN(ensembleConfidence) ? 0.90 : parseFloat(ensembleConfidence.toFixed(3)),
+      regionalMarketMedian: Math.round(ensembleCost * (1 + (avg === 0 ? 0 : (sd / avg)) * 0.5)),
       engineVersion: "ProstoAI-Ensemble-v5.0",
       ensembleDetail: {
         modelAgreement: parseFloat(modelAgreement.toFixed(3)),
@@ -733,7 +734,12 @@ class CostEstimatorService {
 
   _getBaseCost(inputs) {
     const { treatmentType, customPricelist = {} } = inputs;
-    return customPricelist[treatmentType] || this.defaultBaseCosts[treatmentType] || 2500.0;
+    // Check if the treatment exists in the custom pricelist (even if it's 0)
+    if (customPricelist.hasOwnProperty(treatmentType)) {
+      return customPricelist[treatmentType];
+    }
+    // Fallback to default costs if not in custom pricelist
+    return this.defaultBaseCosts[treatmentType] ?? 2500.0;
   }
 
   // ═══════════════════════════════════════════════════════════════════

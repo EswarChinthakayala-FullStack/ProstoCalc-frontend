@@ -200,10 +200,11 @@ const PriceEstimatorPage = () => {
             else if (item.name.includes("(RPD)")) key = "RPD";
             else if (item.name.includes("Root Canal")) key = "RCT";
             newOptions.push(key);
-            const custom = parseFloat(item.custom_cost) || parseFloat(item.effective_cost);
-            const def = parseFloat(item.default_cost);
-            const price = custom > 0 ? custom : def;
-            if (price > 0) newPricelist[key] = price;
+
+            const custom = item.custom_cost !== undefined && item.custom_cost !== null ? parseFloat(item.custom_cost) : (item.effective_cost !== undefined ? parseFloat(item.effective_cost) : 0);
+            const def = parseFloat(item.default_cost || 0);
+            const price = !isNaN(custom) && custom > 0 ? custom : (isNaN(custom) || custom === 0 ? def : custom);
+            newPricelist[key] = price;
           });
           if (newOptions.length > 0) {
             setTreatmentOptions([...new Set([...newOptions, ...treatmentOptions])]);
@@ -510,7 +511,7 @@ const PriceEstimatorPage = () => {
                     </div>
                     <h2 className="text-5xl font-black tracking-tight mb-2">
                       <span className="text-2xl opacity-40 mr-1.5 font-medium">₹</span>
-                      {isCalculating ? "---" : estimate?.prediction?.predictedCost?.toLocaleString()}
+                      {isCalculating ? "---" : (estimate?.prediction?.predictedCost || 0).toLocaleString()}
                     </h2>
                     <p className="text-sm font-medium text-slate-400">Total Estimated Project Value</p>
 
@@ -540,7 +541,7 @@ const PriceEstimatorPage = () => {
                       </div>
                       <div className="flex justify-between p-2 rounded-md bg-white/[0.03]">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Max Scale</span>
-                        <span className="text-xs font-bold font-mono">₹{estimate?.prediction?.maxRange?.toLocaleString()}</span>
+                        <span className="text-xs font-bold font-mono">₹{(estimate?.prediction?.maxRange || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -623,7 +624,7 @@ const PriceEstimatorPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StatCard
                   title="Standard Regression"
-                  value={estimate?.fallback?.baseCost?.toLocaleString() || "---"}
+                  value={(estimate?.fallback?.baseCost || 0).toLocaleString()}
                   subtext="Linear model calculation"
                   icon={TrendingUp}
                   accent="amber"
@@ -631,7 +632,7 @@ const PriceEstimatorPage = () => {
                 />
                 <StatCard
                   title="Market Comparison"
-                  value={estimate?.prediction?.regionalMarketMedian?.toLocaleString() || (estimate?.prediction?.predictedCost * 1.05).toFixed(0).toLocaleString()}
+                  value={(estimate?.prediction?.regionalMarketMedian || 0).toLocaleString()}
                   subtext="Regional clinical median"
                   icon={Wallet}
                   accent="blue"

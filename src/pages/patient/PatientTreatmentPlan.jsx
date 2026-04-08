@@ -11,7 +11,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useSidebar } from '@/context/SidebarContext'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import api from '@/services/api'
+import api, { API_BASE_URL } from '@/services/api'
 import PatientSidebar, { PatientSidebarTrigger } from '@/components/PatientSidebar'
 import { Button } from '@/components/ui/button'
 import ReactMarkdown from 'react-markdown'
@@ -152,8 +152,7 @@ const PatientTreatmentPlan = () => {
   }, [plan?.items])
 
   const handleExportPDF = () => {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const exportUrl = `${baseURL}/web/export_treatment_pdf?request_id=${requestId}`;
+    const exportUrl = `${API_BASE_URL}/web/export_treatment_pdf?request_id=${requestId}`;
 
     toast.info("Preparing clinical report...");
 
@@ -162,8 +161,7 @@ const PatientTreatmentPlan = () => {
   }
 
   const handleShare = async () => {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const pdfUrl = `${baseURL}/web/export_treatment_pdf?request_id=${requestId}`;
+    const pdfUrl = `${API_BASE_URL}/web/export_treatment_pdf?request_id=${requestId}`;
 
     toast.info("Preparing clinical document for sharing...");
 

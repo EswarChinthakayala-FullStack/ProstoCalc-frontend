@@ -22,6 +22,9 @@ import {
   FileText,
   Sparkles
 } from 'lucide-react'
+import { Calendar as CalendarUI } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { format, parseISO } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -43,6 +46,7 @@ import {
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Unknown';
@@ -475,12 +479,29 @@ const ConsultationRequestManager = ({ externalSearchTerm = null, requests = [], 
             <div className="space-y-4 sm:space-y-5">
               <div className="space-y-2">
                 <label className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-teal-600 uppercase tracking-widest ml-1">Proposed Visit Date</label>
-                <Input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  className="h-11 sm:h-12 border-slate-200 dark:border-teal-800 rounded-md font-bold text-slate-700 dark:text-teal-100 bg-slate-50 dark:bg-teal-900/30 focus:bg-white dark:focus:bg-teal-900/50 transition-all shadow-inner text-sm dark:[color-scheme:dark]"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-11 sm:h-12 justify-start text-left font-bold border-slate-200 dark:border-teal-800 rounded-md bg-slate-50 dark:bg-teal-900/30 hover:bg-white dark:hover:bg-teal-900/50 transition-all shadow-inner",
+                        !scheduledDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4 text-teal-500" />
+                      {scheduledDate ? format(parseISO(scheduledDate), "PPP") : <span className="text-slate-400">Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[120]" align="start">
+                    <CalendarUI
+                      mode="single"
+                      selected={scheduledDate ? parseISO(scheduledDate) : undefined}
+                      onSelect={(date) => setScheduledDate(date ? format(date, "yyyy-MM-dd") : '')}
+                      initialFocus
+                      className="bg-white dark:bg-zinc-950 border-none rounded-md shadow-2xl"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-teal-600 uppercase tracking-widest ml-1">Clinical Commencement</label>

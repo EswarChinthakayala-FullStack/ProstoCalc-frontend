@@ -41,6 +41,10 @@ import { useSidebar } from '@/context/SidebarContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Calendar as CalendarUI } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useDentistSchedule } from '@/hooks/useDentistSchedule';
@@ -833,7 +837,29 @@ export default function DentistSchedulePage() {
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 dark:text-teal-600 uppercase tracking-widest mb-1.5 block">New Assignment Date</label>
-                    <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} required className="h-11 bg-white dark:bg-teal-900/30 border-slate-200 dark:border-teal-800 rounded-md text-sm dark:text-white dark:[color-scheme:dark] shadow-inner" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full h-11 bg-white dark:bg-teal-900/30 border-slate-200 dark:border-teal-800 rounded-md text-sm font-bold justify-start text-left shadow-inner",
+                            !newDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4 text-teal-600 dark:text-teal-400" />
+                          {newDate ? format(parseISO(newDate), "PPP") : <span className="text-slate-400">Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                        <CalendarUI
+                          mode="single"
+                          selected={newDate ? parseISO(newDate) : undefined}
+                          onSelect={(date) => setNewDate(date ? format(date, "yyyy-MM-dd") : '')}
+                          initialFocus
+                          className="bg-white dark:bg-zinc-950 border-none rounded-md shadow-2xl"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 dark:text-teal-600 uppercase tracking-widest mb-1.5 block">New Clinical Time</label>
