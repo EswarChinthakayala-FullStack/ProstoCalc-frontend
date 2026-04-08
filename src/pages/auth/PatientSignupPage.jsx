@@ -151,7 +151,18 @@ const PatientSignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row overflow-hidden font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row overflow-hidden font-sans selection:bg-blue-100 selection:text-blue-900 relative">
+      {/* ─── Corner Images ────────────────────────────────────────────────── */}
+      <img 
+        src="/image1.png" 
+        alt="" 
+        className="absolute top-4 left-4 w-12 h-12 object-contain z-[60] pointer-events-none opacity-90 hover:scale-110 transition-transform hidden sm:block" 
+      />
+      <img 
+        src="/image2.png" 
+        alt="" 
+        className="absolute top-4 right-4 w-12 h-12 object-contain z-[60] pointer-events-none opacity-90 hover:scale-110 transition-transform hidden sm:block" 
+      />
 
       {/* ══ LEFT — branding panel ══════════════════════════════════════════ */}
       <div className="hidden lg:flex lg:w-[42%] bg-zinc-950 relative overflow-hidden flex-col justify-between p-12 xl:p-16">

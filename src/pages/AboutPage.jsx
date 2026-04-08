@@ -183,29 +183,6 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* ═══ TEAM ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-24">
-        <motion.div {...fadeUp} className="text-center space-y-2 sm:space-y-3 mb-10 sm:mb-14 lg:mb-16">
-          <p className="text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase text-blue-600">The Team</p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight" style={{ color: C.darkBlue }}>Meet the <span className="text-blue-600">Minds</span> Behind It.</h2>
-        </motion.div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          {team.map((t, i) => (
-            <motion.div key={i} {...stagger(i)} whileHover={{ y: -6 }} className="text-center group">
-              <Card className="border-slate-100 shadow-md hover:shadow-xl rounded-md sm:rounded-md overflow-hidden transition-all">
-                <div className="aspect-[3/4] overflow-hidden relative bg-slate-100">
-                  <img src={t.img} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={t.name} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D2659]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <h4 className="text-xs sm:text-sm lg:text-base font-black tracking-tight" style={{ color: C.darkBlue }}>{t.name}</h4>
-                  <p className="text-[9px] sm:text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">{t.role}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </section>
 
       {/* ═══ CTA ═══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-24">
